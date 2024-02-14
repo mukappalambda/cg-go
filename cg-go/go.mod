@@ -1,4 +1,4 @@
-module github.com/mukappalambda/cg-go
+module github.com/mukappalambda/conjugate-gradient/cg-go
 
 go 1.22.0
 
