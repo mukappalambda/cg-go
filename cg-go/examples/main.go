@@ -6,19 +6,22 @@ import (
 	"log"
 
 	"github.com/mukappalambda/conjugate-gradient/cg-go/cg"
+	"golang.org/x/exp/rand"
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
 var (
-	n   = flag.Int("n", 10, "number of row (or column) of the positive-definite matrix A")
-	tol = flag.Float64("tol", 1e-6, "stopping criterion")
+	n    = flag.Int("n", 10, "number of row (or column) of the positive-definite matrix A")
+	seed = flag.Uint64("seed", 42, "seed")
+	tol  = flag.Float64("tol", 1e-6, "stopping criterion")
 )
 
 func main() {
 	flag.Parse()
 
-	A, err := NewPDDense(*n)
+	src := rand.NewSource(*seed)
+	A, err := NewPDDense(*n, src)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,31 +31,36 @@ func main() {
 	dist := distuv.Normal{
 		Mu:    5,
 		Sigma: 2,
+		Src:   src,
 	}
 	for i := range data {
 		data[i] = dist.Rand()
 	}
 	b := mat.NewVecDense(*n, data)
-	fmt.Println("b", mat.Formatted(b))
+	fmt.Println("b transpose: ", mat.Formatted(b.T()))
 
 	c := cg.NewContainer(A, x0, b)
 
-	sol, converged := cg.ConjugateGradient(c, *tol)
+	xhat, converged := cg.ConjugateGradient(c, *tol)
 
 	if !converged {
 		log.Println("not converged.")
-		fmt.Println(mat.Formatted(sol))
+		fmt.Println("xhat transpose: ", mat.Formatted(xhat.T()))
 		return
 	}
 
-	fmt.Println("sol", mat.Formatted(sol.T()))
+	fmt.Println("xhat transpose: ", mat.Formatted(xhat.T()))
+	bhat := mat.NewVecDense(*n, nil)
+	bhat.MulVec(A, xhat)
+	fmt.Println("A @ xhat = b ?: ", mat.EqualApprox(b, bhat, 1e-6))
 }
 
-func NewPDDense(n int) (*mat.Dense, error) {
+func NewPDDense(n int, src rand.Source) (*mat.Dense, error) {
 	data := make([]float64, n*n)
 	dist := distuv.Uniform{
 		Min: 0,
 		Max: 1,
+		Src: src,
 	}
 
 	for i := range data {
