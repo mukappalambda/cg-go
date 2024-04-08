@@ -4,4 +4,4 @@ clean:
 
 .PHONY: style
 style:
-	@gofumpt -l -w ./..
+	@gofumpt -l -w cg examples

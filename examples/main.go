@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mukappalambda/conjugate-gradient/cg-go/cg"
+	"github.com/mukappalambda/cg-go/cg"
 	"golang.org/x/exp/rand"
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/stat/distuv"
