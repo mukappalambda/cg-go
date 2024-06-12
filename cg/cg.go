@@ -4,6 +4,15 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+type Solver interface {
+	Dims() (int, int)
+	Converged(float64) bool
+	Solution() []float64
+	UpdateDirection()
+	UpdateGradient()
+	UpdateSolution()
+}
+
 type Container struct {
 	A            *mat.Dense
 	x            *mat.VecDense
@@ -12,6 +21,8 @@ type Container struct {
 	Dir          *mat.VecDense
 	isInitialDir bool
 }
+
+var _ Solver = (*Container)(nil)
 
 func NewContainer(A *mat.Dense, x *mat.VecDense, b *mat.VecDense) *Container {
 	c := &Container{
@@ -29,11 +40,11 @@ func NewContainer(A *mat.Dense, x *mat.VecDense, b *mat.VecDense) *Container {
 	return c
 }
 
-func ConjugateGradient(c *Container, tol float64) (sol *mat.VecDense, converged bool) {
-	maxiters, _ := c.A.Dims()
+func ConjugateGradient(c Solver, tol float64) (sol []float64, converged bool) {
+	maxiters, _ := c.Dims()
 
 	if c.Converged(tol) {
-		return c.x, true
+		return c.Solution(), true
 	}
 
 	for i := 0; i <= maxiters; i++ {
@@ -42,10 +53,10 @@ func ConjugateGradient(c *Container, tol float64) (sol *mat.VecDense, converged 
 		c.UpdateGradient()
 
 		if c.Converged(tol) {
-			return c.x, true
+			return c.Solution(), true
 		}
 	}
-	return c.x, false
+	return nil, false
 }
 
 func (c *Container) Alpha() float64 {
@@ -67,6 +78,14 @@ func (c *Container) Beta() float64 {
 	num := mat.Inner(c.Grad, c.A, c.Dir)
 	denom := mat.Inner(c.Dir, c.A, c.Dir)
 	return num / denom
+}
+
+func (c *Container) Dims() (int, int) {
+	return c.x.Dims()
+}
+
+func (c *Container) Solution() []float64 {
+	return c.x.RawVector().Data
 }
 
 func (c *Container) UpdateDirection() {
@@ -96,4 +115,9 @@ func (c *Container) gradient() *mat.VecDense {
 
 func (c *Container) Converged(tol float64) bool {
 	return c.Grad.Norm(2) < tol
+}
+
+func DataToVecDense(data []float64) *mat.VecDense {
+	n := len(data)
+	return mat.NewVecDense(n, data)
 }

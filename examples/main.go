@@ -45,13 +45,13 @@ func main() {
 
 	if !converged {
 		log.Println("not converged.")
-		fmt.Println("xhat transpose: ", mat.Formatted(xhat.T()))
+		fmt.Println("xhat transpose: ", mat.Formatted(cg.DataToVecDense(xhat).T()))
 		return
 	}
 
-	fmt.Println("xhat transpose: ", mat.Formatted(xhat.T()))
+	fmt.Println("xhat transpose: ", mat.Formatted(cg.DataToVecDense(xhat).T()))
 	bhat := mat.NewVecDense(*n, nil)
-	bhat.MulVec(A, xhat)
+	bhat.MulVec(A, cg.DataToVecDense(xhat))
 	fmt.Println("A @ xhat = b ?: ", mat.EqualApprox(b, bhat, 1e-6))
 }
 
