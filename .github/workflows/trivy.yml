@@ -1,0 +1,33 @@
+name: trivy
+
+on:
+  push:
+    branches: ["**", "!main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "0 8 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    name: Build
+    runs-on: "ubuntu-20.04"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          scan-type: "repo"
+          format: "sarif"
+          exit-code: "1"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
